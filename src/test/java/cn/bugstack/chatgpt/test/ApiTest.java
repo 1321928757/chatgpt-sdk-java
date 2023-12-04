@@ -1,9 +1,20 @@
 package cn.bugstack.chatgpt.test;
 
 import cn.bugstack.chatgpt.common.Constants;
+import cn.bugstack.chatgpt.domain.billing.BillingUsage;
+import cn.bugstack.chatgpt.domain.billing.Subscription;
 import cn.bugstack.chatgpt.domain.chat.ChatCompletionRequest;
 import cn.bugstack.chatgpt.domain.chat.ChatCompletionResponse;
 import cn.bugstack.chatgpt.domain.chat.Message;
+import cn.bugstack.chatgpt.domain.edits.EditRequest;
+import cn.bugstack.chatgpt.domain.edits.EditResponse;
+import cn.bugstack.chatgpt.domain.embedd.EmbeddingResponse;
+import cn.bugstack.chatgpt.domain.files.DeleteFileResponse;
+import cn.bugstack.chatgpt.domain.files.UploadFileResponse;
+import cn.bugstack.chatgpt.domain.images.ImageEnum;
+import cn.bugstack.chatgpt.domain.images.ImageRequest;
+import cn.bugstack.chatgpt.domain.images.ImageResponse;
+import cn.bugstack.chatgpt.domain.other.OpenAiResponse;
 import cn.bugstack.chatgpt.domain.qa.QACompletionRequest;
 import cn.bugstack.chatgpt.domain.qa.QACompletionResponse;
 import cn.bugstack.chatgpt.session.Configuration;
@@ -18,6 +29,10 @@ import okhttp3.sse.EventSourceListener;
 import org.junit.Before;
 import org.junit.Test;
 
+import java.io.File;
+import java.io.IOException;
+import java.time.LocalDate;
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.concurrent.CountDownLatch;
 
@@ -123,4 +138,116 @@ public class ApiTest {
         new CountDownLatch(1).await();
     }
 
+    /**
+     * 上下文对话
+     */
+    @Test
+    public void test_chat_completions_context() {
+        // 1-1. 创建参数
+        ChatCompletionRequest chatCompletion = ChatCompletionRequest
+                .builder()
+                .messages(new ArrayList<>())
+                .model(ChatCompletionRequest.Model.GPT_3_5_TURBO.getCode())
+                .user("testUser01")
+                .build();
+        // 写入请求信息
+        chatCompletion.getMessages().add(Message.builder().role(Constants.Role.USER).content("写一个java冒泡排序").build());
+
+        // 1-2. 发起请求
+        ChatCompletionResponse chatCompletionResponse01 = openAiSession.completions(chatCompletion);
+        log.info("测试结果：{}", chatCompletionResponse01.getChoices());
+
+        // 写入请求信息
+        chatCompletion.getMessages().add(Message.builder().role(Constants.Role.USER).content(chatCompletionResponse01.getChoices().get(0).getMessage().getContent()).build());
+        chatCompletion.getMessages().add(Message.builder().role(Constants.Role.USER).content("换一种写法").build());
+
+        ChatCompletionResponse chatCompletionResponse02 = openAiSession.completions(chatCompletion);
+        log.info("测试结果：{}", chatCompletionResponse02.getChoices());
+    }
+
+    /**
+     * 文本修复
+     */
+    @Test
+    public void test_edit() {
+        // 文本请求
+        EditRequest textRequest = EditRequest.builder()
+                .input("码农会锁")
+                .instruction("帮我修改错字")
+                .model(EditRequest.Model.TEXT_DAVINCI_EDIT_001.getCode()).build();
+        EditResponse textResponse = openAiSession.edit(textRequest);
+        log.info("测试结果：{}", textResponse);
+
+        // 代码请求
+        EditRequest codeRequest = EditRequest.builder()
+                // j <= 10 应该修改为 i <= 10
+                .input("for (int i = 1; j <= 10; i++) {\n" +
+                        "    System.out.println(i);\n" +
+                        "}")
+                .instruction("这段代码执行时报错，请帮我修改").model(EditRequest.Model.CODE_DAVINCI_EDIT_001.getCode()).build();
+        EditResponse codeResponse = openAiSession.edit(codeRequest);
+        log.info("测试结果：{}", codeResponse);
+    }
+
+    /**
+     * 生成图片
+     */
+    @Test
+    public void test_genImages() {
+        // 方式1，简单调用
+        ImageResponse imageResponse01 = openAiSession.genImages("画一个996加班的程序员");
+        log.info("测试结果：{}", imageResponse01);
+
+        // 方式2，调参调用
+        ImageResponse imageResponse02 = openAiSession.genImages(ImageRequest.builder()
+                .prompt("画一个996加班的程序员")
+                .size(ImageEnum.Size.size_256.getCode())
+                .responseFormat(ImageEnum.ResponseFormat.B64_JSON.getCode()).build());
+        log.info("测试结果：{}", imageResponse02);
+    }
+
+    /**
+     * 修改图片，有3个方法，入参不同。
+     */
+    @Test
+    public void test_editImages() throws IOException {
+        ImageResponse imageResponse = openAiSession.editImages(new File("/Users/fuzhengwei/1024/KnowledgePlanet/chatgpt/chatgpt-sdk-java/docs/images/996.png"), "去除图片中的文字");
+        log.info("测试结果：{}", imageResponse);
+    }
+
+    @Test
+    public void test_embeddings() {
+        EmbeddingResponse embeddingResponse = openAiSession.embeddings("哈喽", "嗨", "hi!");
+        log.info("测试结果：{}", embeddingResponse);
+    }
+
+    @Test
+    public void test_files() {
+        OpenAiResponse<File> openAiResponse = openAiSession.files();
+        log.info("测试结果：{}", openAiResponse);
+    }
+
+    @Test
+    public void test_uploadFile() {
+        UploadFileResponse uploadFileResponse = openAiSession.uploadFile(new File("/Users/fuzhengwei/1024/KnowledgePlanet/chatgpt/chatgpt-sdk-java/docs/files/introduce.md"));
+        log.info("测试结果：{}", uploadFileResponse);
+    }
+
+    @Test
+    public void test_deleteFile() {
+        DeleteFileResponse deleteFileResponse = openAiSession.deleteFile("file id 上传后才能获得");
+        log.info("测试结果：{}", deleteFileResponse);
+    }
+
+    @Test
+    public void test_subscription() {
+        Subscription subscription = openAiSession.subscription();
+        log.info("测试结果：{}", subscription);
+    }
+
+    @Test
+    public void test_billingUsage() {
+        BillingUsage billingUsage = openAiSession.billingUsage(LocalDate.of(2023, 12, 4), LocalDate.now());
+        log.info("测试结果：{}", billingUsage.getTotalUsage());
+    }
 }
