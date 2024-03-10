@@ -10,10 +10,10 @@ import java.util.List;
 import java.util.Map;
 
 /**
- * @author 小傅哥，微信：fustack
+ * @author LuckySJ
  * @description 文本问答，请求信息；OpenAI官网API构建参数；https://platform.openai.com/playground
- * @github https://github.com/fuzhengwei
- * @Copyright 公众号：bugstack虫洞栈 | 博客：https://bugstack.cn - 沉淀、分享、成长，让自己和他人都能有所收获！
+ * @gitee https://gitee.com/liushijie-kitie
+ * @Copyright LuckySJ-刘仕杰
  */
 @Data
 @Builder
