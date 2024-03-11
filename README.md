@@ -17,7 +17,7 @@
 
 ## 1. 组件配置
 
-- 申请ApiKey：[https://open.bigmodel.cn/usercenter/apikeys](https://open.bigmodel.cn/usercenter/apikeys) - 注册申请开通，即可获得 ApiKey
+- 申请ApiKey：可以去OpenAI官网注册申请开通，也可到某宝购买key
 - 运行环境：JDK 1.8+
 - maven pom - `未推送到Maven中央仓库，需要下载代码本地 install 后使用`
 
@@ -35,7 +35,7 @@ public class ApiTest {
     public void test_OpenAiSessionFactory() {
         // 1. 配置文件 [联系小傅哥获取key]
         // 1.1 官网原始 apiHost https://api.openai.com/ - 官网的Key可直接使用
-        // 1.2 三方公司 apiHost https://pro-share-aws-api.zcyai.com/ - 需要找我获得 Key 【支持3.5\4.0流式问答模型调用，有些模型已废弃不对接使用】
+        // 1.2 三方公司 apiHost https://pro-share-aws-api.zcyai.com/  不能用就换其他地址
         Configuration configuration = new Configuration();
         configuration.setApiHost("https://pro-share-aws-api.zcyai.com/");
         configuration.setApiKey("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");
